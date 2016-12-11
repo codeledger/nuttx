@@ -47,6 +47,10 @@
 #define BLINKY_TIM_FREQ  1000
 #define BLINKY_PERIOD    1000
 
+#define BLINKY_TIM_FREQ_2  200
+#define BLINKY_PERIOD_2    200
+
+
 #define LED_ON              0
 #define LED_OFF             1
 
@@ -87,6 +91,27 @@ static void blinky_timer_start(void)
     }
 }
 
+static void blinky_timer_start2(void)
+{
+    gpio_set_value(GPIO_MODS_DEMO_ENABLE, 1);
+
+    if (!tim_dev) {
+        dbg("BLINKY\n");
+
+        tim_dev = stm32_tim_init(BLINKY_TIM);
+
+        DEBUGASSERT(tim_dev);
+
+        STM32_TIM_SETPERIOD(tim_dev, BLINKY_PERIOD_2);
+        STM32_TIM_SETCLOCK(tim_dev, BLINKY_TIM_FREQ_2);
+        STM32_TIM_SETMODE(tim_dev, STM32_TIM_MODE_PULSE);
+        STM32_TIM_SETISR(tim_dev, blinky_timer_handler, 0);
+        STM32_TIM_ENABLEINT(tim_dev, 0);
+    } else {
+        dbg("ignore\n");
+    }
+}
+
 static void blinky_timer_stop(void)
 {
     gpio_set_value(GPIO_MODS_DEMO_ENABLE, 0);
@@ -111,8 +136,10 @@ static int blinky_recv(struct device *dev, uint32_t len, uint8_t data[])
 
     if (data[0] == 0 || data[0] == '0')
         blinky_timer_stop();
-    else
+    else if (data[0] == 1 || data[0] == '1')
         blinky_timer_start();
+    else 
+	blinky_timer_start2();
 
     return 0;
 }
